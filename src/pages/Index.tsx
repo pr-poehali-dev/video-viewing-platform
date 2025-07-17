@@ -1,15 +1,54 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import Icon from "@/components/ui/icon";
+
+interface Message {
+  id: number;
+  text: string;
+  isUser: boolean;
+  timestamp: Date;
+  isTyping?: boolean;
+}
+
+interface ChatSession {
+  id: number;
+  title: string;
+  messages: Message[];
+  lastMessage: Date;
+}
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [likedVideos, setLikedVideos] = useState<Set<number>>(new Set());
   const [subscribedChannels, setSubscribedChannels] = useState<Set<number>>(new Set());
+  const [currentView, setCurrentView] = useState<"videos" | "chat">("videos");
+  const [message, setMessage] = useState("");
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([
+    {
+      id: 1,
+      title: "Общий чат",
+      messages: [
+        {
+          id: 1,
+          text: "Привет! Я ваш ИИ-помощник. Как дела? Чем могу помочь?",
+          isUser: false,
+          timestamp: new Date()
+        }
+      ],
+      lastMessage: new Date()
+    }
+  ]);
+  const [currentChatId, setCurrentChatId] = useState(1);
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Mock video data
   const videos = [
@@ -101,6 +140,92 @@ const Index = () => {
     setSubscribedChannels(newSubscribed);
   };
 
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatSessions, currentChatId]);
+
+  const getCurrentChat = () => {
+    return chatSessions.find(chat => chat.id === currentChatId) || chatSessions[0];
+  };
+
+  const sendMessage = async () => {
+    if (!message.trim()) return;
+
+    const currentChat = getCurrentChat();
+    const userMessage: Message = {
+      id: Date.now(),
+      text: message.trim(),
+      isUser: true,
+      timestamp: new Date()
+    };
+
+    // Add user message
+    setChatSessions(prev => prev.map(chat => 
+      chat.id === currentChatId 
+        ? { ...chat, messages: [...chat.messages, userMessage], lastMessage: new Date() }
+        : chat
+    ));
+
+    setMessage("");
+    setIsTyping(true);
+
+    // Simulate AI response
+    setTimeout(() => {
+      const responses = [
+        "Интересный вопрос! Дайте мне подумать над этим...",
+        "Я понимаю вашу точку зрения. Вот что я думаю по этому поводу:",
+        "Отличная идея! Давайте разберем это подробнее.",
+        "Это напоминает мне о том, что...",
+        "Согласен с вами! А что если мы посмотрим на это с другой стороны?",
+        "Хороший момент. Вот несколько мыслей на эту тему:",
+        "Понятно! Позвольте мне объяснить это более детально."
+      ];
+
+      const aiMessage: Message = {
+        id: Date.now() + 1,
+        text: responses[Math.floor(Math.random() * responses.length)],
+        isUser: false,
+        timestamp: new Date()
+      };
+
+      setChatSessions(prev => prev.map(chat => 
+        chat.id === currentChatId 
+          ? { ...chat, messages: [...chat.messages, aiMessage], lastMessage: new Date() }
+          : chat
+      ));
+      setIsTyping(false);
+    }, 1000 + Math.random() * 2000);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  const createNewChat = () => {
+    const newChat: ChatSession = {
+      id: Date.now(),
+      title: `Чат ${chatSessions.length + 1}`,
+      messages: [
+        {
+          id: 1,
+          text: "Привет! Новый чат создан. О чем поговорим?",
+          isUser: false,
+          timestamp: new Date()
+        }
+      ],
+      lastMessage: new Date()
+    };
+    setChatSessions(prev => [...prev, newChat]);
+    setCurrentChatId(newChat.id);
+  };
+
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
@@ -137,6 +262,22 @@ const Index = () => {
 
             {/* User Actions */}
             <div className="flex items-center space-x-4">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-gray-300 hover:text-white"
+                onClick={() => setCurrentView("chat")}
+              >
+                <Icon name="MessageCircle" size={20} />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-gray-300 hover:text-white"
+                onClick={() => setCurrentView("videos")}
+              >
+                <Icon name="Play" size={20} />
+              </Button>
               <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white">
                 <Icon name="Upload" size={20} />
               </Button>
@@ -156,21 +297,158 @@ const Index = () => {
       <nav className="border-b border-gray-800 bg-gray-900/50">
         <div className="container mx-auto px-4 py-2">
           <div className="flex space-x-6 overflow-x-auto">
-            {["Главная", "Тренды", "Подписки", "Библиотека", "История", "Ваши видео", "Понравившиеся", "Посмотреть позже"].map((item) => (
-              <Button
-                key={item}
-                variant="ghost"
-                className="text-gray-300 hover:text-white whitespace-nowrap"
-              >
-                {item}
-              </Button>
-            ))}
+            {currentView === "videos" ? (
+              ["Главная", "Тренды", "Подписки", "Библиотека", "История", "Ваши видео", "Понравившиеся", "Посмотреть позже"].map((item) => (
+                <Button
+                  key={item}
+                  variant="ghost"
+                  className="text-gray-300 hover:text-white whitespace-nowrap"
+                >
+                  {item}
+                </Button>
+              ))
+            ) : (
+              <div className="flex items-center space-x-4">
+                <Badge className="bg-red-600 text-white">
+                  <Icon name="Bot" size={16} className="mr-1" />
+                  ИИ Чат
+                </Badge>
+                <span className="text-gray-400">Умный помощник для ваших вопросов</span>
+              </div>
+            )}
           </div>
         </div>
       </nav>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
+        {currentView === "chat" ? (
+          <div className="flex h-[calc(100vh-200px)] bg-gray-900 rounded-lg overflow-hidden">
+            {/* Chat Sidebar */}
+            <div className="w-80 bg-gray-800 border-r border-gray-700 flex flex-col">
+              <div className="p-4 border-b border-gray-700">
+                <Button onClick={createNewChat} className="w-full bg-red-600 hover:bg-red-700">
+                  <Icon name="Plus" size={16} className="mr-2" />
+                  Новый чат
+                </Button>
+              </div>
+              <ScrollArea className="flex-1">
+                <div className="p-2">
+                  {chatSessions.map((chat) => (
+                    <Button
+                      key={chat.id}
+                      variant="ghost"
+                      className={`w-full justify-start mb-2 h-auto p-3 ${
+                        currentChatId === chat.id ? 'bg-gray-700 text-white' : 'text-gray-300 hover:bg-gray-700'
+                      }`}
+                      onClick={() => setCurrentChatId(chat.id)}
+                    >
+                      <div className="text-left">
+                        <div className="font-medium truncate">{chat.title}</div>
+                        <div className="text-xs text-gray-500 truncate">
+                          {chat.messages[chat.messages.length - 1]?.text.substring(0, 50)}...
+                        </div>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+
+            {/* Chat Area */}
+            <div className="flex-1 flex flex-col">
+              {/* Chat Header */}
+              <div className="p-4 border-b border-gray-700 bg-gray-800">
+                <div className="flex items-center space-x-3">
+                  <Avatar>
+                    <AvatarFallback className="bg-red-600">AI</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h3 className="font-semibold text-white">{getCurrentChat().title}</h3>
+                    <p className="text-sm text-gray-400">
+                      {isTyping ? "Печатает..." : "В сети"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Messages */}
+              <ScrollArea className="flex-1 p-4">
+                <div className="space-y-4">
+                  {getCurrentChat().messages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'} animate-fade-in`}
+                    >
+                      <div
+                        className={`flex items-start space-x-3 max-w-[70%] ${
+                          msg.isUser ? 'flex-row-reverse space-x-reverse' : 'flex-row'
+                        }`}
+                      >
+                        <Avatar className="w-8 h-8">
+                          <AvatarFallback className={msg.isUser ? "bg-blue-600" : "bg-red-600"}>
+                            {msg.isUser ? "U" : "AI"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div
+                          className={`p-3 rounded-lg ${
+                            msg.isUser
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-800 text-gray-100 border border-gray-700'
+                          }`}
+                        >
+                          <p className="text-sm">{msg.text}</p>
+                          <p className="text-xs mt-2 opacity-70">
+                            {msg.timestamp.toLocaleTimeString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {isTyping && (
+                    <div className="flex justify-start animate-pulse">
+                      <div className="flex items-start space-x-3 max-w-[70%]">
+                        <Avatar className="w-8 h-8">
+                          <AvatarFallback className="bg-red-600">AI</AvatarFallback>
+                        </Avatar>
+                        <div className="p-3 rounded-lg bg-gray-800 border border-gray-700">
+                          <div className="flex space-x-1">
+                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+              </ScrollArea>
+
+              {/* Message Input */}
+              <div className="p-4 border-t border-gray-700 bg-gray-800">
+                <div className="flex space-x-3">
+                  <Textarea
+                    ref={textareaRef}
+                    placeholder="Введите сообщение..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    className="flex-1 min-h-[44px] max-h-32 bg-gray-900 border-gray-600 text-white placeholder-gray-400 resize-none"
+                    rows={1}
+                  />
+                  <Button 
+                    onClick={sendMessage}
+                    disabled={!message.trim() || isTyping}
+                    className="bg-red-600 hover:bg-red-700 disabled:bg-gray-600"
+                  >
+                    <Icon name="Send" size={16} />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
         {/* Video Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {videos.map((video, index) => (
@@ -266,6 +544,7 @@ const Index = () => {
             </CardContent>
           </Card>
         </div>
+        )}
       </main>
     </div>
   );
