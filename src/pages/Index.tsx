@@ -28,7 +28,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [likedVideos, setLikedVideos] = useState<Set<number>>(new Set());
   const [subscribedChannels, setSubscribedChannels] = useState<Set<number>>(new Set());
-  const [currentView, setCurrentView] = useState<"videos" | "chat">("videos");
+  const [currentView, setCurrentView] = useState<"videos" | "chat" | "kids">("videos");
   const [message, setMessage] = useState("");
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([
     {
@@ -48,6 +48,105 @@ const Index = () => {
   const [currentChatId, setCurrentChatId] = useState(1);
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const kidsVideos = [
+    {
+      id: 101,
+      title: "Алфавит для малышей | Учим буквы весело",
+      channel: "Детские Песенки",
+      views: "2.5M",
+      duration: "15:30",
+      thumbnail: "https://via.placeholder.com/320x180?text=Алфавит+ABC",
+      description: "Изучаем русский алфавит с веселыми песенками и яркими картинками",
+      uploadDate: "2 дня назад",
+      category: "Обучающие",
+      isVerified: true
+    },
+    {
+      id: 102,
+      title: "Сказки на ночь | Колобок",
+      channel: "Добрые Сказки",
+      views: "1.8M",
+      duration: "12:45",
+      thumbnail: "https://via.placeholder.com/320x180?text=Колобок+Сказка",
+      description: "Классическая русская сказка с красивыми иллюстрациями",
+      uploadDate: "1 день назад",
+      category: "Сказки",
+      isVerified: true
+    },
+    {
+      id: 103,
+      title: "Учим цвета и формы | Развивающие игры",
+      channel: "Умные Малыши",
+      views: "3.2M",
+      duration: "18:20",
+      thumbnail: "https://via.placeholder.com/320x180?text=Цвета+и+Формы",
+      description: "Изучаем основные цвета и геометрические фигуры в игровой форме",
+      uploadDate: "3 дня назад",
+      category: "Развивающие",
+      isVerified: true
+    },
+    {
+      id: 104,
+      title: "Песенки про животных | Кто как говорит",
+      channel: "Веселые Зверята",
+      views: "4.1M",
+      duration: "14:15",
+      thumbnail: "https://via.placeholder.com/320x180?text=Животные+Песни",
+      description: "Учим названия животных и звуки, которые они издают",
+      uploadDate: "1 неделю назад",
+      category: "Музыкальные",
+      isVerified: true
+    },
+    {
+      id: 105,
+      title: "Машинки и паровозики | Мультик для мальчиков",
+      channel: "Транспорт ТВ",
+      views: "2.7M",
+      duration: "22:10",
+      thumbnail: "https://via.placeholder.com/320x180?text=Машинки+Мультик",
+      description: "Приключения веселых машинок и их друзей",
+      uploadDate: "4 дня назад",
+      category: "Мультфильмы",
+      isVerified: true
+    },
+    {
+      id: 106,
+      title: "Принцессы и феи | Добрые мультики для девочек",
+      channel: "Сказочный Мир",
+      views: "1.9M",
+      duration: "16:30",
+      thumbnail: "https://via.placeholder.com/320x180?text=Принцессы+Феи",
+      description: "Волшебные истории о принцессах и их приключениях",
+      uploadDate: "2 дня назад",
+      category: "Мультфильмы",
+      isVerified: true
+    },
+    {
+      id: 107,
+      title: "Учим счет от 1 до 10 | Математика для малышей",
+      channel: "Умный Счет",
+      views: "2.1M",
+      duration: "13:45",
+      thumbnail: "https://via.placeholder.com/320x180?text=Счет+1-10",
+      description: "Изучаем цифры и учимся считать с веселыми персонажами",
+      uploadDate: "5 дней назад",
+      category: "Обучающие",
+      isVerified: true
+    },
+    {
+      id: 108,
+      title: "Времена года | Природа для детей",
+      channel: "Природа и Дети",
+      views: "1.6M",
+      duration: "19:20",
+      thumbnail: "https://via.placeholder.com/320x180?text=Времена+Года",
+      description: "Изучаем особенности каждого времени года",
+      uploadDate: "1 неделю назад",
+      category: "Познавательные",
+      isVerified: true
+    }
+  ];
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Mock video data
@@ -266,17 +365,25 @@ const Index = () => {
                 variant="ghost" 
                 size="sm" 
                 className="text-gray-300 hover:text-white"
-                onClick={() => setCurrentView("chat")}
+                onClick={() => setCurrentView("videos")}
               >
-                <Icon name="MessageCircle" size={20} />
+                <Icon name="Play" size={20} />
               </Button>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 className="text-gray-300 hover:text-white"
-                onClick={() => setCurrentView("videos")}
+                onClick={() => setCurrentView("kids")}
               >
-                <Icon name="Play" size={20} />
+                <Icon name="Baby" size={20} />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-gray-300 hover:text-white"
+                onClick={() => setCurrentView("chat")}
+              >
+                <Icon name="MessageCircle" size={20} />
               </Button>
               <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white">
                 <Icon name="Upload" size={20} />
@@ -322,7 +429,128 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
-        {currentView === "chat" ? (
+        {currentView === "kids" ? (
+          <>
+            {/* Kids Content Header */}
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-white mb-2">Детские каналы</h1>
+              <p className="text-gray-400">Безопасный и развивающий контент для детей</p>
+            </div>
+
+            {/* Kids Categories */}
+            <div className="flex flex-wrap gap-2 mb-6">
+              <Badge variant="secondary" className="bg-blue-600 text-white hover:bg-blue-700">
+                Обучающие
+              </Badge>
+              <Badge variant="secondary" className="bg-green-600 text-white hover:bg-green-700">
+                Сказки
+              </Badge>
+              <Badge variant="secondary" className="bg-purple-600 text-white hover:bg-purple-700">
+                Мультфильмы
+              </Badge>
+              <Badge variant="secondary" className="bg-orange-600 text-white hover:bg-orange-700">
+                Песенки
+              </Badge>
+              <Badge variant="secondary" className="bg-pink-600 text-white hover:bg-pink-700">
+                Развивающие
+              </Badge>
+            </div>
+
+            {/* Kids Videos Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {kidsVideos.map((video, index) => (
+                <Card 
+                  key={video.id} 
+                  className="bg-gray-900 border-gray-800 hover:bg-gray-800 transition-all duration-300 group animate-fade-in hover:scale-105 hover:shadow-xl hover:shadow-blue-500/20"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <CardContent className="p-0">
+                    <div className="relative overflow-hidden rounded-t-lg">
+                      <img 
+                        src={video.thumbnail} 
+                        alt={video.title}
+                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute top-2 right-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-sm font-medium">
+                        {video.duration}
+                      </div>
+                      <div className="absolute bottom-2 left-2">
+                        <Badge className="bg-blue-600 text-white text-xs">
+                          {video.category}
+                        </Badge>
+                      </div>
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center">
+                        <Icon name="Play" size={40} className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <h3 className="text-white font-semibold mb-2 line-clamp-2 group-hover:text-blue-400 transition-colors">
+                        {video.title}
+                      </h3>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Avatar className="w-6 h-6">
+                          <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${video.channel}`} />
+                          <AvatarFallback className="bg-blue-600 text-white text-xs">
+                            {video.channel.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-gray-400 text-sm flex items-center gap-1">
+                          {video.channel}
+                          {video.isVerified && <Icon name="BadgeCheck" size={14} className="text-blue-500" />}
+                        </span>
+                      </div>
+                      <p className="text-gray-500 text-sm mb-2 line-clamp-2">
+                        {video.description}
+                      </p>
+                      <div className="flex items-center justify-between text-gray-500 text-sm">
+                        <span>{video.views} просмотров</span>
+                        <span>{video.uploadDate}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-3">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-gray-400 hover:text-blue-400 hover:bg-blue-900/20"
+                          onClick={() => {
+                            setLikedVideos(prev => {
+                              const newSet = new Set(prev);
+                              if (newSet.has(video.id)) {
+                                newSet.delete(video.id);
+                              } else {
+                                newSet.add(video.id);
+                              }
+                              return newSet;
+                            });
+                          }}
+                        >
+                          <Icon 
+                            name="Heart" 
+                            size={16} 
+                            className={likedVideos.has(video.id) ? "fill-red-500 text-red-500" : ""}
+                          />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-gray-400 hover:text-blue-400 hover:bg-blue-900/20"
+                        >
+                          <Icon name="Share" size={16} />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-gray-400 hover:text-blue-400 hover:bg-blue-900/20 ml-auto"
+                        >
+                          <Icon name="MoreHorizontal" size={16} />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </>
+        ) : currentView === "chat" ? (
           <div className="flex h-[calc(100vh-200px)] bg-gray-900 rounded-lg overflow-hidden">
             {/* Chat Sidebar */}
             <div className="w-80 bg-gray-800 border-r border-gray-700 flex flex-col">
